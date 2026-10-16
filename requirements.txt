@@ -1,0 +1,31 @@
+# Minimum versions, not exact pins: most of you are on Anaconda, and hard pins
+# fight an existing conda environment.
+#
+# CHECK BEFORE YOU INSTALL. A current Anaconda install already has everything
+# below except TensorFlow, and running pip against a conda environment can
+# change versions you did not ask it to - we have seen it downgrade numpy,
+# which breaks other packages that were compiled against the newer one. So run
+# this first:
+#
+#   python -c "import pandas, numpy, matplotlib, seaborn, sklearn, joblib; print('all present')"
+#
+# If that prints, you are done - do not install anything. If it fails, install
+# only what is missing, and prefer conda if that is how you set Python up:
+#
+#   conda install pandas numpy matplotlib seaborn scikit-learn joblib
+#   pip install -r requirements.txt        # or this, in a fresh venv
+
+pandas>=2.0
+numpy>=1.24
+matplotlib>=3.7
+seaborn>=0.12
+scikit-learn>=1.4
+joblib>=1.3
+
+# Notebooks. Already present if you installed Anaconda or JupyterLab.
+jupyterlab>=4.0
+ipykernel>=6.0
+
+# Image option only (flower photos). Not part of Anaconda:
+#   python -c "import tensorflow as tf; print(tf.__version__)"
+# tensorflow>=2.16
