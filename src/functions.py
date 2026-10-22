@@ -1,18 +1,5 @@
-"""Your reusable functions live here.
-
-The rule from the brief: Python logic goes in `.py` files, and the notebooks
-hold the narrative. The moment a cell grows past a few lines, or you find
-yourself pasting it a second time, move it here and call it from the notebook.
-
-To use this module from a notebook in `notebooks/`:
-
-    import sys
-    sys.path.append("..")
-    from src.functions import *
-
-The four below are only there to show the shape. Rename them, change the
-arguments, write your own. This is a starting point, not an interface you have
-to implement.
+""" Reusable functions live here,
+    as well as defined RANDOM_STATE, CV, and SCORING
 """
 
 from pathlib import Path
@@ -30,7 +17,7 @@ MODELS = ROOT / "models"
 
 RANDOM_STATE = 0
 
-CV = StratifiedKFold(n_splits=5, shuffle=True, random_state=0)
+CV = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
 SCORING = {
     "f2": make_scorer(fbeta_score, beta=2),
     "average_precision": "average_precision",
@@ -56,10 +43,10 @@ def split_data(df, test_size=0.2, random_state=RANDOM_STATE):
     Drop the ID, encode the target, and make the stratified train/test split.
     """    
 
-    X = df.drop(columns=['customerID','Churn'])
+    X = df.drop(columns=['Churn']).drop(columns=['customerID'], errors='ignore')
     y = (df['Churn']== 'Yes').astype(int)
 
-    return train_test_split(X, y, test_size=test_size, stratify=y, random_state=RANDOM_STATE)
+    return train_test_split(X, y, test_size=test_size, stratify=y, random_state=random_state)
 
 def build_preprocessor(numeric, categorical):
     """Return a ColumnTransformer that prepares each type of column."""
@@ -80,6 +67,12 @@ def build_preprocessor(numeric, categorical):
     return preprocessor
 
 def add_features(X, features=('n_addons', 'new_customer', 'con_serv')):
+    """ Three engineered features added based on the EDA and linked it to higher churn:
+        n_addons - count of internet add-ons,
+        new_customer - tenure <= 12 months, 
+        con_serv - month-to-month contract with fiber optic  
+    """
+
     X = X.copy()
     addons = ['OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV', 'StreamingMovies']
     if 'n_addons' in features:
@@ -97,18 +90,12 @@ def compare_models(models, X, y, cv, scoring):
     for name, model in models.items():
         results = cross_validate(model, X, y, cv=cv, scoring=scoring)
         rows.append({'model': name,
-                     'F1': results['test_f1'].mean(),
-                     'F1 std': results['test_f1'].std(),
+                     'F2': results['test_f2'].mean(),
+                     'F2 std': results['test_f2'].std(),
                      'recall': results['test_recall'].mean(),
                      'precision': results['test_precision'].mean(),
                      'accuracy': results['test_accuracy'].mean()
                      })
-    comparison = pd.DataFrame(rows).set_index('model').sort_values('F1', ascending=False)
+    comparison = pd.DataFrame(rows).set_index('model').sort_values('F2', ascending=False)
 
     return comparison.round(3)
-
-
-
-def plot_errors(y_true, y_pred):
-    """Show where the model goes wrong: a confusion matrix or the residuals."""
-    pass
